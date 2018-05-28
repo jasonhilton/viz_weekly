@@ -16,7 +16,6 @@
 *.out
 *.zip
 paper/*.md
-paper/*.csv
 results/
 data/midyear/*
 data/HMD/*

@@ -1,6 +1,8 @@
 # viz_weekly
 Code for the Paper "Visualising Weekly Mortality Data using Polar Graphs
 
+The paper itself is available at [here](https://jasonhilton.github.io/viz_weekly/paper/Viz_weekly.html).
+
 This repo provides the code needed for producing the above paper.
 
 The repository is designed so that the results can be reproduced by running a
