@@ -1,7 +1,7 @@
 ---
 title: "Visualising weekly mortality data using polar graphs."
 author: "Jason Hilton"
-date: "11 May 2018"
+date: "28 May 2018"
 output:
   html_document:
     css: viz.css
