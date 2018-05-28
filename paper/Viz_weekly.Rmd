@@ -1,0 +1,376 @@
+---
+title: "Visualising weekly mortality data using polar graphs."
+author: "Jason Hilton"
+date: "11 May 2018"
+output:
+  html_document:
+    css: viz.css
+    df_print: paged
+    fig_caption: yes
+    keep_md: yes
+    pandoc_args: 
+      ["--filter",
+       "pandoc-fignos"]
+  pdf_document:
+    keep_tex: yes
+bibliography: viz.bib
+---
+
+```{r setup, include=FALSE}
+library(curl)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(magrittr)
+library(readxl)
+library(purrr)
+library(knitr)
+library(HMDHFDplus)
+library(viridis)
+library(ggfan)
+library(xts)
+library(dygraphs)
+library(shiny)
+library(lubridate)
+
+prefix <- ".."
+knitr::opts_chunk$set(echo =F, warning = F)
+is_html_output = function() {
+  if (interactive()){
+    return(TRUE)
+  } else {
+    output_type <-knitr::opts_knit$get("rmarkdown.pandoc.to")
+    if (length(output_type) >0){
+      return(output_type=="html")
+    } else {
+      return(FALSE)
+    }
+  }
+}
+
+if (!is_html_output()){
+  knitr::opts_chunk$set(dev="pdf")
+}
+
+knit_hooks$set(plot_lab = function(before, options, envir) {
+  if (!before) {
+    ## after a chunk has been evaluated
+    # label plot with chunkname
+    #will only work if one plot per chunk
+    plotlab = options$label
+    return(paste("{#fig:",plotlab,"}",sep=""))
+ }
+})
+
+source(file.path(prefix, "R", "data_cleaning_functions.R"))
+```
+
+# Introduction
+Traditionally, demographers are concerned with analysing data with a frequency of one year. This is partly because of demography's long association with the practical business of official statistics and  population forecasting [@Greenhalgh1996]. Statistics collection and aggregation is an expensive and time-consuming business which puts a limit on the frequency of releases, and it is natural to align with preexisting cycles such as the calendar or financial year that also form the basis for governmental decision making. The importance of age to demographic analysis is another reason why the year is the discipline's basic temporal unit. Our everyday understanding of age is fixed at a temporal resolution of one year, in that when we are asked to report our age, what we supply is 'age at last birthday'[^young]. The process of 'ageing on' in the cohort component projection model that is integral to most demographic projection almost always involves a discrete increase in both time and age of at least one year.
+
+As a result, many demographic visualisations in which time is a dimension are likely to be displaying observations (or predictions) at a frequency of one year. Of course, there are many exceptions to this generalisation; to give but one example, duration models work with directly with dates of events, and so are able to display survivorship curves over days, weeks or months. @Willekens2013 gives a comprehensive overview of the use of chronological objects in demographic analysis, highlighting the problems caused by the irregularities of the Julian calendar.
+
+A need for increased responsiveness on the part of government and an increased technological capacity to collect and process data has led to some statistics being collected and released on a more frequent basis. For instance, the harmonised Eurostat statistics on Asylum applications and decisions are published at a data frequency of one month @eurostat]. In parallel, the drive towards the use of big data, particularly from internet user data collected initially collected for other purposes, will create new opportunities to examine data over smaller periods of time [@Billari2017]. 
+
+This paper presents an interactive visualisation of recent UK weekly mortality data using polar charts. The cyclical presentation emphasises the periodic nature of the data, while the interactivity allows the user to better understand the data through manipulation.
+
+[^young]: The exception to this rule is when we have collected so few years that even the fractions matter!
+
+# Polar Graphs 
+At its most basic, creating a graph is primarily a process of converting data into visual characteristics such as distance along a coordinate axis, colour, or shape [@Wickham2009]. Data generally consists of individual observations, each of which contains values for one or more dimension [@Wickham2014]. Each dimension can be consistently represented by the same visual characteristic, so that individual observations are distinguishable and comparable. Graphs plotted within the Cartesian coordinate space map dimensions of the data to the horizontal ($x$) or vertical ($y$) axis. In contrast, those using polar coordinates instead use the clockwise angle ($\theta$) and the radius ($r$). This encoding is most advantageous when the data to be plotted is naturally periodic, so that the dimension mapped to the angular axis has the characteristic that if it is increased enough it will return to its starting point.
+
+In his study of the 'Golden Age' of Visualisation, @Friendly2008 notes that one of the earliest use of polar graphs was to display information about wind direction. Compass bearings are clearly periodic; as the compass needle swings clockwise from North to South, its distance from its starting point increases, but if it continues in the same direction it begins to approach North again.
+
+Another early use of polar charts to display quantitative information was also in the field of mortality. Florence Nightingale presented her data on mortality amongst soldiers in the Crimean War  using polar charts, so that the circular plotting area is split into 12 segments with equal angles, one for each month [@Friendly2008]. The area of each segment represented the number of deaths, with colours mapped to cause of death. Nightingale's innovative graphics clearly showed that preventable disease, not battle injury was the primary cause of death in field hospitals, and that her work on basic hygiene drastically reduced the death rate [ibid]. 
+
+More recently, polar charts have been to great effect used to illustrate the acceleration of man-made climate change through the dramatic increase in temperature with the atmospheric carbon dioxide concentration ([http://openclimatedata.net/climate-spirals/from-emissions-to-global-warming-line-chart/](http://openclimatedata.net/climate-spirals/from-emissions-to-global-warming-line-chart/)).
+
+Circular plotting areas are often used in other cases where angular distance is not directly mapped to a continuous data dimension. Radar charts are often used to compare scores of different subjects or products across several dimensions, but these are fraught with difficulty (e.g. http://blog.scottlogic.com/2011/09/23/a-critique-of-radar-charts.html). Circular plots have also used where one discrete data dimension has no natural ordering, particularly when interactions between different levels of this dimensions need to be shown. Genomic data, for instance, can be shown in such a manner using the `circos` plotting library, with chromosomes and the genes the contain located around the circumferences, allowing associations between genes to be displayed with arcs linking them [@Krzywinski2009]. @Abel2014 use a similar technique to good effect in a demographic context to show migration flows between countries.
+
+# Animation and Interactivity in Demographic Visualisation
+
+As discussed above, visualisation involves converting data dimensions to visual characteristics. However, there is a limit to the amount of dimensions that can be encoded within a single plot before the supply of characteristics run dry, and as the editorial to this collection suggests, over-complexity can hinder rather than help the communication of information. Generally speaking, two dimensions may be mapped to axes, one to colour, and perhaps another to shape, size or line type. Exploiting colour scales through ternary diagrams or qualitative-sequential schemes [@Scholey2017a] can extend the amount of information that can be imparted by a static plot by allowing compositional data to be included, but again there are limits to such gains. The use of animations or interactivity can allow the form of the plot to remain relatively simple, but provide for additional dimensions to be added. The use of animation is particular effective if the animated dimension is time, as the time dimension in the data unfolds intuitively in real time (at some rate of compression). Interactivity in this context may be as simple as allowing switching between data-sets or between different statistical models, facilitating direct comparisons by the user. For example, a reader may examine the effect on coefficients or on predictions of switching between models with different controls or covariates. 
+
+@Billari2015 describes two modes of demographic analysis; discovery and explanation. Interactivity facilitates the exploration and discovery of features of the data. @Kerren2012 [p.3885] describe how interactivity forms a crucial part of the 'sense-making loop' in the field of visual analytics, which focuses on the use of visual tools in the analysis and processing of big data. In the context of an academic article, providing interactive tools to the reader of the paper allows them to re-discover points of interest identified by the author, providing a greater understanding of the thought processes behind the analysis. Interactivity can also help to explain difficult methodological concepts. Distill is an online-only journal which focuses on the explanation of algorithms in machine learning, and strongly encourages the use of interactivity. A recent article attempted to show how neural network-based image recognition software 'sees' the world [@Olah2018], allow the reader to examine the effect of changing inputs images.
+
+There are some very good examples of interactive demographic visualisations. These include those built by national statistics agencies (e.g. [https://www.gut-leben-in-deutschland.de/static/LB/report/income](https://www.gut-leben-in-deutschland.de/static/LB/report/income)) and those built by academics, such as the Human Mortality Explorer by Jonas Scholey ([https://jschoeley.shinyapps.io/hmdexp/](https://jschoeley.shinyapps.io/hmdexp/)). However, such graphics do not often form part of the exposition of an academic paper. Where animations are included, they are often relegated to the supplemental material, which may or may not by accessed by the casual reader. This seems regrettable, as active exploration of the data or the set of models may provide greater insight into the points made in the paper. A greater emphasis on `html` in the publication of academic papers may help to facilitate exploration of visualisation opportunities. The advantages of a `html`-first direction for journal articles are discussed by @Peroni2017, who also provide a simplified `html` specification (RASH) aimed entirely at the production of scholarly articles. The previously mentioned Distill journal encourages the use of `html` in submissions for these reasons. While many academics are happy to use `latex` for the production of `pdf` articles, fewer are comfortable with creating `html` documents (this author included), although the latter is a more generally useful technology.
+
+This is partly a cultural issue, as we are trained to think of academic papers as documents that exist mainly as printed artifacts [@Swoger2013], even though this may not be how they are often read. An examination of the author guidelines for leading demographic journals suggest although videos are often permitted, little information is given on how to include other forms of interactive graphics. Although websites of journal publishers might allow inline videos or html-based interactive graphics, taking advantage of this is not something that comes naturally to academic authors. Additionally, the use of colour must generally be coupled with another visual characteristic (such as line type or point shape), so that the graphic is still comprehensible when printed. 
+
+The press towards open access publication and replicability may provide provide a route towards more web-based publication of academic research. The Open Science movement provides admirable solutions to sharing code and data that may also facilitate greater experimentation with manuscript format [c.f @Masuzzo2017], There is still appears to be an underlying assumption that that `pdf` is the primary format for publishing academic research, however. Another exception to the rule is the Journal for Artificial Societies and Social Simulation, an online-only open-access journal which encourages the use of both colour and animations; the utility of simple animations in presenting results can be seen in section 4 of @Fitzpatrick2015.
+
+The availability of tools to simplify the production of interactive visualisations is also an issue. The `d3` javascript plotting library [@Bostock2011] is highly flexible and can produce dynamic client-side visualisations, where the computational work involved with changing the plot in response to interaction takes place on the user's computer, thus avoiding the need for server hosting. However, the learning curve associated with d3 is relatively steep. Interfaces with common statistical programming languages exist - for instance, the `rCharts` and `htmlwidgets` R packages provide interfaces to certain `d3`-based libraries. The development of pre-defined `d3` plots for interactive visualisation of, for instance, R model objects might be one way in which to lower the technical barrier to the production of useful visualisations. The accessibility and permanence of research outputs are also an issue to be considered in this debate. In light of the above discussion, in parallel to the `.pdf` version of this paper, an `.html` version will also be provided with containing plots produced using `d3`. 
+
+
+# Weekly Mortality in England and Wales 2010-2018
+In order to demonstrate the utility of the two visualisation tools discussed in the preceding discussion, polar charts and interactivity, the rest of this paper explores their use in the exploration of weekly mortality data for England and Wales between 2010 and April 2018. This period is particularly interesting and controversial as it coincides with both an apparent slow-down in the rate of mortality decline [@CMI2015a; @Hiam2017] and a period of austerity where government spending on health and social care was not increased at the rate it had been previously [@LGA2015,@Hiam2017a]. This latter period of spending restraint also took place as the population aged, so that the demand for healthcare was in any case likely to increase. A series of papers have investigated the characteristics of this deceleration and its potential causes and effects. An early paper by the actuaries of the Continuous Mortality Investigation identified that the rate of decline of the age-standardised mortality rate had slowed considerably between 2010-2014 when compared to the trend up to 2010 [@CMI2015a], and inspired the approach of this paper in also examining weekly mortality. Flu out-breaks that disproportionately effect the elderly population (also seen in other parts of Europe) are responsible for some of the year-to-year variation [@PublicHealthEngland2016], but it has also been suggested that reductions in the social care budget of local councils and additional pressure on the National Health Services caused by lack of funding may be responsible for the greater than expected number of deaths [@Loopstra2016; @Hiam2017a]. 
+
+The purpose of this paper is not to shed any new light on the debate over the causes of mortality deceleration in recent years, however, but rather to demonstrate the utility of particular visualisation tools using a relevant dataset. Mortality data show clear seasonal patterns relating to temperature and disease prevalence, and so are periodic in the sense discussed above and suitable for examination using polar charts. The months of December and January, which share similar climatic conditions, are displayed adjacent to each other in polar charts and are thus easily comparable. Data published by the ONS provides weekly deaths counts for England and Wales, with breakdowns along a number of dimensions: sex, broad age group; Government Office Region; and cause of death (broadly categorised as respiratory or other cause) [@OfficeforNationalStatistics2018]. Figure A displays raw weekly death data for England and Wales using standard Cartesian coordinates, using the interactive `dygraphs` `d3` library to facilitate user investigation in the `html` version of this paper. Seasonal patterns are noticeable in both respiratory and other causes of death, and the effect of public holidays and death registration is also evident in sharp falls followed by compensating  recoveries around Christmas and Easter. Raw death counts do also appear higher in the second half of the data, but no attempt has yet been made to account for exposure differences, both in absolute terms and with respect to age composition.
+
+
+```{r timeseries, fig.cap="Figure A Time Series of Deaths in England and Wales. Source: ONS (2018)", warnings=FALSE, plot_lab=TRUE}
+cause_df <- readRDS(file.path(prefix,"data","cause.rds"))
+
+if(is_html_output()){
+  plot_data <- cause_df %>%
+  rename(Date=date) %>% 
+  select(Date,Deaths, Cause) %>%
+  spread(Cause, Deaths)
+  plot_xts <- xts(plot_data%>% select(-Date), plot_data$Date)
+  dygraph(plot_xts, main="Total Number of Deaths by Cause, England and Wales") %>%
+  dyRangeSelector()
+} else{
+  ggplot(cause_df, aes(x=Week_end, y=Deaths,group=Cause,colour=Cause)) + 
+    geom_line() + theme_bw()
+}
+```
+
+
+We can alternatively examine this data in a polar coordinates plot, as shown in Figure @fig:polar1. It is necessary to limit the the period displayed to 2014-2018 to avoid over-plotting. The polar plot emphasises the seasonal nature of the respiratory death series, showing higher counts and greater volatility in the first quarter of the year. The dotted ring provides a visual point of reference, and is set at the mean value over the period. Peaks in respiratory deaths in 2015 and 2018 are clearly visible and comparable with early years.
+
+```{r polar1, fig.cap="Polar plot of England and Wales Mortality 2014-2018. Source: ONS 2018", plot_lab=TRUE}
+cause_df %<>% rename(Date=date) %>% mutate(`Day of Year` = yday(midweek))
+
+# polar plots in ggplot don't join up by default...
+# so make the first point of each year to also be the last point of the previous...
+duplicate_points <- cause_df %>% group_by(Cause,Year) %>% arrange(Year,Week_number) %>% mutate(N=1:n()) %>% filter(N==min(N)) %>% filter(Year>2010,Year < 2017) %>% ungroup() %>% mutate(Year=Year+1, `Day of Year`=366)
+
+polar_plot_df <- rbind(cause_df, duplicate_points %>% select(-N)) %>% 
+  ungroup() %>% arrange(Year, `Day of Year`)
+month_labeler <- function(yday) month(date("2017-12-31") + yday, label=T)
+
+cols <- viridis_pal(option="C",end = 0.9)(5)
+
+mean_resp <- polar_plot_df %>% filter(Cause=="Respiratory deaths",
+                                      Year > 2013) %>%
+  select(Deaths) %>% unlist() %>% mean(na.rm=T)
+
+mean_other <- polar_plot_df %>% filter(Cause=="Other deaths",
+                                      Year > 2013) %>%
+  select(Deaths) %>% unlist() %>% mean(na.rm=T)
+
+
+
+p1 <- ggplot(polar_plot_df %>% filter(Cause=="Respiratory deaths",
+                                      Year > 2013),
+       aes(x=`Day of Year`,
+           y=Deaths, 
+           group=Year,colour=as.factor(Year) )) +
+      geom_hline(yintercept = mean_resp, linetype=5) +
+         geom_line(size=1.2) +
+  coord_polar() +
+  scale_x_continuous(labels=month_labeler,breaks=seq(15,365,30),
+                     minor_breaks = NULL) +
+  #scale_colour_manual("Year", values=cols, guide=F) + theme_minimal() +
+  scale_colour_manual("Year", values=cols) + theme_minimal() +
+  scale_y_continuous("Deaths (000s)",
+                     labels=function(x) round(x/1000,1),
+                     limits=c(0,3600),
+                     breaks=c(0,mean_resp)) +
+  
+  ggtitle("Respiratory deaths")
+
+p2 <- ggplot(polar_plot_df %>% filter(Cause=="Other deaths",
+                                      Year > 2013),
+       aes(x=`Day of Year`,
+           y=Deaths, 
+           group=Year,colour=as.factor(Year))) +
+  geom_hline(yintercept = mean_other, linetype=5) +
+         geom_line(size=1.2) +
+  coord_polar() + 
+  scale_x_continuous(labels=month_labeler,breaks=seq(15,365,30),
+                     minor_breaks = NULL) +
+  scale_colour_manual("Year", values=cols) + theme_minimal() +
+  scale_y_continuous("Deaths (000s)",
+                     labels=function(x) round(x/1000,1),
+                     limits=c(0,NA),
+                     breaks=c(0,mean_other)) +
+  ggtitle("Other deaths")
+
+multiplot(p1,p2, cols=2)
+```
+
+
+# Methodology
+Plotting raw death counts provides little information about the underlying mortality trends. For this we need to take into account both seasonality and exposure to risk, and to attempt to unpick the effect of public holidays on death registrations. In the exploratory analysis that follows, a crude interpolation method is used to approximate weekly exposure by age, and a statistical model is used to extract trend and seasonal components, together with fixed effects for public holidays. The approached used is similar in some respects to that used in Chapter 21 of @Gelman2014a for the analysis of daily birth data; although the model here is simpler, and uses a periodic spline rather than a Gaussian process for smoothing.
+
+## Exposure
+To approximate exposures by week and age, midyear population totals taken from ONS midyear estimates and, for 2017 and 2018, ONS forecasts, are linearly  interpolated from mid-year to mid-year in a similar manner to @CMI2015a. The population at the end of week $w$ in year $t$ is calculated by  taking midyear estimates for years $t$ and $t+1$, and moving $\frac{w}{52}$ of the way along a straight line connecting these estimates. The exposure is then the average of the population at the beginning and end of the week, correcting for the fact that we wish to express exposure in person-years:
+$$
+\begin{aligned}
+P_{w,t} &=  \left( P_{t} + w \frac{P_{t+1} - P_{t}}{52} \right)\\
+E_{w,t} &= \frac{1}{52} \frac{P_{w,t} + P_{w+1,t}}{2}.
+\end{aligned}
+$$
+
+This is not an ideal method as it assumes deaths occur evenly throughout the year, which directly contradicts the seasonal trends seen in the data we are analysing. However, it is expected for the broad age groups used, the difference will be small enough to conduct rudimentary modelling carried out below.
+
+
+## Model
+
+Deaths in each week and age group are assumed to follow a Poisson distribution, with the log of the Poisson rate represented using a simple model with a time trend indexed by the number of days $t$ since the start of the fitting period on the 1st January 2010. A smooth order 4 b-spline $s(d)$ with a period of one year is also employed to capture the seasonal effect [@Wood2006], which is allowed to vary for different age groups:
+
+$$
+\begin{aligned}
+D_{x,w} \sim \text{Possion}(\mu_{x,w}E_{x,w}) \\
+\text{log}(\mu_{x,w}) = \alpha_x + \gamma_x t + s_x(d) + \mathbf{x}_{w}\boldsymbol{\beta}.
+\end{aligned}
+$$
+
+This is a function of the day of the year $d$, which is more precisely the number of days since the 31\textsuperscript{st} December the previous year, and contains 9 basis functions, 3 of which straddle the end of the year, providing for a smooth periodic fit without discontinuities. Without adjustments, the level of this spline will be confounded with the intercept, so the spline is constrained to sum to zero over the whole fitting period, and the random walk smoothing prior on the basis function coefficients is conditioned on this constraint [@Wood2006; @Hilton2018].
+
+$$
+\begin{aligned}
+s_x(d) = B(X)\theta_x \\
+\theta_x \sim \text{MVN}(\mathbf{0},\Sigma)
+\end{aligned}
+$$
+
+Fixed effects $\beta$ are also included to capture the effect of public holidays. A separate term is included for each different public holiday, so that the effect of Easter and Christmas may have different magnitudes, but the effect of Easters in different years are equal. The vector $\mathbf{x}_w$ contains an indicator for each holiday that takes the value $1$ if that week contains that specific public holiday, and the value $-1$ if the preceding week included it. This aims to capture the idea that deaths not registered because of a holiday are likely to instead be registered the following week [@Gelman2014a Chap. 21]. Normal priors are given to all coefficient vectors, with vague half normal priors on the variance parameters.
+
+$$
+\begin{aligned}
+\boldsymbol{\beta} \sim \text{Normal}(0, \sigma_{\beta}^{2}) \\
+\boldsymbol{\gamma} \sim \text{Normal}(0, \sigma_{\gamma}^{2}) \\
+\boldsymbol{\alpha} \sim \text{Normal}(0, \sigma_{\alpha}^{2}).
+\end{aligned}
+$$
+
+
+
+# Estimation and Results
+
+## Estimation
+Posterior model samples were obtained using the Bayesian sampling software `stan` [@TheStanDevelopmentTeam2018].
+The estimated models are were quick to converge due to their simplicity, taking a matter of seconds to obtain suitable effective posterior sample sizes on a modern desktop. Code is provided with the supplementary material for the replication of results.
+
+## Results for the Crude Mortality Rate
+Looking first at a simple model with no distinction by age, where the modeled rate is just the crude mortality rate, a number of features of the posterior distributions are worth mentioning. Firstly, the polar plot in Figure @fig:fixed displays the magnitude of fixed effects of public holidays on death registration. These effects are reasonably large in size; New Year appears to cause a delay in deaths registrations by about 20%, and Diamond Jubilee of 2011 (for which there were two days off) had a similarly sized effect. The polar chart gives a good visual indication of the distribution of holidays across the year.
+
+```{r fixed, plot_lab=T, fig.cap="Location and magnitude of the posterior distribution of the fixed effect of holidays"}
+
+hols_df <- readRDS(file.path(prefix,"results", "hols.rds"))
+
+get_linerange <- function(x){
+  out <- quantile(x, probs=c(0.025,0.5,0.975))
+  names(out) <- c("ymin","y", "ymax")
+  return(out)
+}
+ggplot(hols_df, aes(x=Week,y=Holidays,group=Year, fill=Year)) + 
+  geom_bar(stat = "summary",position="identity", fun.y=mean) + coord_polar() + 
+  geom_linerange(stat="summary", fun.data=get_linerange) + 
+  theme_minimal() + geom_hline(yintercept=0) + 
+  scale_fill_viridis(option="C") +
+  ggtitle("Posterior Means of Effects of Public Holidays") +
+  annotate("text", x=2, y=0.3, label="Christmas and \n New Year") +
+  annotate("text", x=15, y=0.24, label="Easter") + 
+  annotate("text", x=24, y=0.3, label="Diamond Jubilee") +
+  annotate("text", x=37, y=0.25, label="August BH") +
+  scale_y_continuous(limits=c(-0.3,NA))
+  
+```
+
+
+The estimated seasonal effect was as expected; mortality is higher during the period December-March, and considerably lower during the summer months (Figure @fig:seasonal). Figure @fig:resid and the interactive graphic in the `html` version of this paper display the model residuals, defined here as the difference between the observed log rates and the equivalent posterior samples, we can see that the greatest deviations occur in the winters of early 2015 and 2018. This is potentially related to influenza outbreaks that appear to have disproportionately affected care homes and the old [@PublicHealthEngland2015a;@PublicHealthEngland2018]. The interactive version of the plot was constructed in `d3` from the outputs of the model [^sources]. Points inside the green circle are below the posterior mean estimate, while outside this circle rates are higher than the simple linear, seasonal and holiday terms together imply. As time progresses, older data is fades and is removed from the plot, with the most recent data displayed in blue. The plot can be paused at any point, and the slider dragged back to any point in the range of the data, between 2010 and April 2018.
+
+[^sources]: Code from two simple `d3` code 'blocks' produced by Mike Bostock and Jane Pong were utilised to help construct this plot. These are available at  [https://bl.ocks.org/mbostock/4583749](https://bl.ocks.org/mbostock/4583749) and [https://bl.ocks.org/officeofjane/47d2b0bfeecfcb41d2212d06d095c763](https://bl.ocks.org/officeofjane/47d2b0bfeecfcb41d2212d06d095c763) respectively.
+
+```{r seasonal, fig.cap="Polar plot of Posterior Seasonal Effect", plot_lab=T}
+
+seasonal_df <- readRDS(file.path(prefix, "results","seasonal.rds"))
+ggplot(seasonal_df, aes(x=Day,y=Seasonal)) +
+  geom_interval(colour="darkgreen") +
+  theme_minimal() + coord_polar() + ylim(-0.2,0.2) + geom_hline(yintercept=0, colour="red") + scale_x_continuous(labels=month_labeler,breaks=seq(15,365,30),
+                     minor_breaks = NULL) + ggtitle("Posterior Seasonal Effect, CMR model")
+
+
+```
+
+
+```{r resid, fig.cap="Mean model residual in log-rates", plot_lab=T}
+resid_df <- readRDS(file.path(prefix, "results","resid.rds"))
+
+ggplot(resid_df %>% group_by(Date) %>% 
+         summarise(Year=first(Year), Week=first(Week), Residual=mean(Residual)),
+       aes(y=Year,x=Week,fill=Residual)) + 
+  geom_tile() + 
+  scale_fill_viridis(option="C") + 
+  theme_minimal() + 
+  scale_y_reverse() + scale_x_continuous(position="top")
+
+```
+
+
+```{r plot, results="asis"}
+if(is_html_output()){cat(htmltools::htmlPreserve("<script src='https://cdnjs.cloudflare.com/ajax/libs/d3/4.5.0/d3.js'> </script><script src='https://cdnjs.cloudflare.com/ajax/libs/d3-queue/3.0.3/d3-queue.js'></script><br><br><div id='play'><button class='play-button'>Play</button></div><br><br><div id='plot'></div><br><br><script src='vis2.js'></script><script>do_polar('mod2.csv','#plot','#play','.play-button')</script>"))}
+```
+
+
+## Results: Rate by broad age group.
+
+The ONS weekly death dataset provides age breakdowns for 7 broad age categories. However, as can be seen from figure @fig:mean_age, the mean age of individuals within these age groups fluctuates, so that changes to the mortality rate experienced by the group as a whole may be related to changes in its age composition. The black vertical lines indicate when the ONS weekly dataset begins. Of particular interest is the ageing of the 85+ age group in the final panel of the plot, which may account for the increasing mortality rate of that group.
+
+
+```{r mean_age, plot_lab=T, fig.cap="Exposure-averaged age within each age category. Source=HMD", message=FALSE, warnings=FALSE}
+deaths <- readRDS(file.path(prefix, "data", "HMD", "deaths_hmd.Rdata"))
+expos <- readRDS(file.path(prefix, "data", "HMD", "exposures_hmd.Rdata"))
+
+deaths %<>% select(-OpenInterval) %>% gather(Sex, Deaths, -Year,-Age)
+expos %<>% select(-OpenInterval) %>% gather(Sex, Exposure, -Year,-Age)
+hmd_df <- left_join(deaths, expos ,by=c("Year", "Age", "Sex"))
+hmd_df %<>% mutate(Age_group=cut(Age,c(0,1,15,45,65,75,85,120), right=F))
+
+
+## average mean age
+age_mean <- hmd_df %>% group_by(Age_group, Sex, Year) %>% 
+  summarise(Mean_age=weighted.mean(Age,Exposure))
+
+age_mean %>% filter(Year > 1960) %>% 
+  ggplot(aes(x=Year, y=Mean_age, group=Sex, colour=Sex)) +
+  geom_line() + facet_wrap(~Age_group, scales="free") +
+  geom_vline(xintercept=2010) + theme_bw()
+```
+
+<!----
+```{r residuals_age, results="asis"}
+if(is_html_output()){cat(htmltools::htmlPreserve("<div id='play_2'><button class='play-button' id='play-button-2'>Play</button></div><br><div><select id='age_select'><option value='Under 1 year'>Under 1 Year</option><option value= '01-14'> 1-14</option><option value= '15-44'> 15-44</option><option value= '45-64'> 45-64</option><option value= '65-74'> 65-74</option><option value= '75-84'> 75-84</option><option selected='selected' value= '85+'> 85+</option></select></div><br><div id='plot-2'></div><br><br><script src='vis3.js'></script><script>do_polar_filter('mod3.csv','#plot-2','#play_2','#play-button-2', '#age_select')</script>"))}
+
+```
+---->
+
+As before, we can examine the posterior mean of the log residuals by week and age. Focusing on the oldest group, we can see that the heat-map of residuals is similar to the pattern for the total population. This is not surprising, as we expect a large proportion of all deaths to occur at these older ages. 
+
+```{r resids_heat_2, plot_lab=T, fig.cap="Heatmap of posterior means of log residuals by week of the year for Age 85+.", message=FALSE, warnings=FALSE}
+resid_2 <- readRDS(file.path(prefix, "results","resid_age.rds"))
+
+ggplot(resid_2 %>% filter(Age_group=="85+") %>% group_by(Date) %>% 
+         mutate(Year=year(Date)) %>% 
+         summarise(Year=first(Year), Week=first(Week), Residual=mean(Residual)),
+       aes(y=Year,x=Week,fill=Residual)) + 
+  geom_tile() + 
+  scale_fill_viridis(option="C") + 
+  theme_minimal() + 
+  scale_y_reverse() + scale_x_continuous(position="top")
+
+```
+
+As before, we can also examine the evolution of these patterns through time using an animated d3 graph. Using the drop-down menu, one can also switch between different age groups, and the chart and chart axis adjust dynamically. A greater variability is evident at lower ages, where the underlying rates are low. Older ages, in contrast, show more pronounced peaks in particular periods when influenza or lower temperatures may have increased mortality. Pausing at particular time periods and switch between age-groups facilitates direct comparison between them. A similar technique could be fruitfully employed within demographic papers for comparing predictions between different models, or differences in raw rates between sexes. The use of interactivity within a paper in this manner may help authors better communicate their arguments.
+
+```{r residuals_age_2, results="asis"}
+if(is_html_output()){cat(htmltools::htmlPreserve("<div id='play-2'><button class='play-button' id='play-button-2'>Play</button></div><br><div><select id='age_select'><option value='Under 1 year'>Under 1 Year</option><option value= '01-14'> 1-14</option><option value= '15-44'> 15-44</option><option value= '45-64'> 45-64</option><option value= '65-74'> 65-74</option><option value= '75-84'> 75-84</option><option selected='selected' value= '85+'> 85+</option></select></div><br><div id='plot-2'></div><br><br><script src='vis3.js'></script>"))}
+
+```
+
+# Conclusion
+This paper has provided a simple demonstration of the how animated polar charts can be used to map demographic data with a frequency smaller than one year. Polar charts are particularly useful for data that is truly periodic, and in the case of mortality, may emphasise seasonal effects in the data. Used in combination with statistical methods, polar plots may help to tease out the variation from trends and existing seasonal patterns. They may not always be appropriate, however, and can particularly be deceptive when areas are involved, as these do not scale linearly with increases in radius. The editorial to this special edition also suggests that more familiar chart types should be favoured where possible, as audiences are likely to be better able to decypher the information contained in these. However, where the data is strongly seasonal, the use of polar charts may be justifiable.
+
+Many improvements could be made to the analytical work conducted in this paper; estimation of exposures could be made more accurate by utilising information about the distribution of deaths over weeks, and the pattern of deaths by single year of age over whole year periods could be included to infer the weekly pattern of age-specific mortality rates. However, this paper is primarily focused on visualisation rather than substantive issues; the main aim is to show how different visualisation methods can highlight certain features of the data.
+
+To that end, this paper has also demonstrated some relatively crude interactive graphs. The use of animation and interactive plots as a integral part of a demographic paper is an area which is under-explored, largely because of cultural and technical barriers. A greater emphasis on `html` as a publishing medium may help encourage greater use of interactivity. The development of `d3`-based tools focused on making it easy to produce common demographic visualisations from existing statistical programming languages (particularly `R`) will help to make this process painless, and will encourage embedding of interactive elements within dynamic, reproducible documents [@Xie2015]. 
+
+------
+
+# References
+
+
+
