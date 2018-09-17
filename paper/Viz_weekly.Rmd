@@ -12,17 +12,6 @@ output:
     fig_caption: yes
     keep_tex: yes
     number_sections: true
-  html_document:
-    css: viz.css
-    number_sections: true
-    df_print: paged
-    fig_caption: yes
-    keep_md: yes
-    pandoc_args: 
-      ["--filter", "pandoc-fignos"]
-  pdf_document:
-    keep_tex: yes
-    number_sections: true
 bibliography: viz.bib
 csl: demography.csl
 biblio-style: "apa-good"
@@ -54,12 +43,15 @@ is_html_output = function() {
   } else {
     output_type <-knitr::opts_knit$get("rmarkdown.pandoc.to")
     if (length(output_type) >0){
-      return(output_type=="html")
+      return(grepl("html",output_type))
     } else {
       return(FALSE)
     }
   }
 }
+
+print(paste0("is_html_output returns ", is_html_output()))
+
 
 if (!is_html_output()){
   knitr::opts_chunk$set(dev="pdf")
@@ -70,12 +62,14 @@ if (!is_html_output()){
 source(file.path(prefix, "R", "data_cleaning_functions.R"))
 ```
 
+
+
 # Introduction
 Traditionally, demographers are concerned with analysing data with a frequency of one year. This is partly because of demography's long association with the practical business of official statistics and  population forecasting [@Greenhalgh1996]. Statistics collection and aggregation is an expensive and time-consuming business which puts a limit on the frequency of releases, and it is natural to align with preexisting cycles such as the calendar or financial year that also form the basis for governmental decision making. The importance of age to demographic analysis is another reason why the year is the discipline's basic temporal unit. Our everyday understanding of age is fixed at a temporal resolution of one year, in that when we are asked to report our age, what we supply is 'age at last birthday'[^young]. The process of 'ageing on' in the cohort component projection model that is integral to most demographic projection almost always involves a discrete increase in both time and age of at least one year.
 
 As a result, many demographic visualisations in which time is a dimension are likely to be displaying observations (or predictions) at a frequency of one year. Of course, there are many exceptions to this generalisation; to give but one example, duration models work with directly with dates of events, and so are able to display survivorship curves over days, weeks or months. @Willekens2013 gives a comprehensive overview of the use of chronological objects in demographic analysis, highlighting the problems caused by the irregularities of the Julian calendar.
 
-A need for increased responsiveness on the part of government and an increased technological capacity to collect and process data has led to some statistics being collected and released on a more frequent basis. For instance, the harmonised Eurostat statistics on Asylum applications and decisions are published at a data frequency of one month @eurostat]. In parallel, the drive towards the use of big data, particularly from internet user data collected initially collected for other purposes, will create new opportunities to examine data over smaller periods of time [@Billari2017]. 
+A need for increased responsiveness on the part of government and an increased technological capacity to collect and process data has led to some statistics being collected and released on a more frequent basis. For instance, the harmonised Eurostat statistics on Asylum applications and decisions are published at a data frequency of one month [@eurostat]. In parallel, the drive towards the use of big data, particularly from internet user data collected initially collected for other purposes, will create new opportunities to examine data over smaller periods of time [@Billari2017]. 
 
 This paper presents an interactive visualisation of recent UK weekly mortality data using polar charts. The cyclical presentation emphasises the periodic nature of the data, while the interactivity allows the user to better understand the data through manipulation.
 
@@ -113,7 +107,7 @@ This is partly a cultural issue, as we are trained to think of academic papers a
 
 The press towards open access publication and replicability may provide provide a route towards more web-based publication of academic research. The Open Science movement provides admirable solutions to sharing code and data that may also facilitate greater experimentation with manuscript format [c.f @Masuzzo2017], There is still appears to be an underlying assumption that that `pdf` is the primary format for publishing academic research, however. Another exception to the rule is the Journal for Artificial Societies and Social Simulation, an online-only open-access journal which encourages the use of both colour and animations; the utility of simple animations in presenting results can be seen in section 4 of @Fitzpatrick2015.
 
-The availability of tools to simplify the production of interactive visualisations is also an issue. The `d3` javascript plotting library [@Bostock2011] is highly flexible and can produce dynamic client-side visualisations, where the computational work involved with changing the plot in response to interaction takes place on the user's computer, thus avoiding the need for server hosting. However, the learning curve associated with d3 is relatively steep. Interfaces with common statistical programming languages exist - for instance, the `rCharts` and `htmlwidgets` R packages provide interfaces to certain `d3`-based libraries. The development of pre-defined `d3` plots for interactive visualisation of, for instance, R model objects might be one way in which to lower the technical barrier to the production of useful visualisations. The accessibility and permanence of research outputs are also an issue to be considered in this debate. In light of the above discussion, in parallel to the `.pdf` version of this paper, an `.html` version will also be provided with containing plots produced using `d3`. 
+The availability of tools to simplify the production of interactive visualisations is also an issue. The `d3` javascript plotting library [@Bostock2011] is highly flexible and can produce dynamic client-side visualisations, where the computational work involved with changing the plot in response to interaction takes place on the user's computer, thus avoiding the need for server hosting. However, the learning curve associated with d3 is relatively steep. Interfaces with common statistical programming languages exist - for instance, the `rCharts` and `htmlwidgets` R packages provide interfaces to certain `d3`-based libraries. The development of pre-defined `d3` plots for interactive visualisation of, for instance, R model objects might be one way in which to lower the technical barrier to the production of useful visualisations. The accessibility and permanence of research outputs are also an issue to be considered in this debate. In light of the above discussion, in parallel to the `.pdf` version of this paper, an `.html` version will also be provided with containing plots produced using `d3`. The `bookdown` package for R is used for this purpose, as it facilitates production of `.pdf` and `.html` outputs from a single source file written in a simple markdown format, interleaved with the R code needed to produce plots and graphics [@Xie2018]. Snapshots of interactive graphics can also easily be produced in this framework so that the `.pdf` and `html` version of the document do not diverge.
 
 
 # Weekly Mortality in England and Wales 2010-2018
@@ -408,7 +402,10 @@ To that end, this paper has also demonstrated some relatively crude interactive 
 
 ------
 
-# References
+# Acknowledgments {-}
+This work was supported by the ESRC Centre for Population Change - phase II (grant ES/K007394/1). Many thanks to all the participants at the Rostock Retreat on Visualisation who provided helpful comments and questions on early versions of the work. All the views presented in this paper are those of the author only.
+
+# References {-}
 
 
 
