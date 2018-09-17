@@ -7,12 +7,13 @@ output:
     keep_md: TRUE
 ---
 
+# Visualising weekly mortality data using polar graphs
 
 Code for the Paper "Visualising Weekly Mortality Data using Polar Graphs
 
 The paper itself is available [here](https://jasonhilton.github.io/viz_weekly/paper/Viz_weekly.html).
 
-This repo provides the code needed for producing the above paper.
+This repo provides the code needed for producing the paper.
 
 The repository is designed so that the results can be reproduced by running a
 series of R scripts.
