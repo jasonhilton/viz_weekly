@@ -214,7 +214,7 @@ function processData(error, data){
   current_data = mort_data.filter(function(d) {
     return d.date < startDate;
   });
-  n_steps = mort_data.length;
+  n_steps = mort_data.length - 1;
   step_size = targetValue / n_steps;
   renderPlot(current_data);
   //renderSeasonal(mort_data.slice(0,53));
@@ -270,7 +270,7 @@ function update(h) {
   previous_date = x.invert(x(h)  - step_size*160);
   // filter data set and redraw plot
   current_data = mort_data.filter(function(d) {
-    return d.date < h && d.date > previous_date;
+    return d.date <= h && d.date >= previous_date;
   });
 
 
@@ -286,7 +286,7 @@ function update(h) {
   //enderPlot(current_data);  
   // draw plot piece by piece
   for (var  dd = 1; dd < n_paths; dd++){
-    plot_data = current_data.slice(dd-2,dd);
+    plot_data = current_data.slice(dd-1,dd+1);
     renderPlot(plot_data,opacity(n_paths - dd),colour(n_paths - dd));
   }
 }

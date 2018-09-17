@@ -167,16 +167,16 @@ var gr = svg.append("g")
     .data(r.ticks(3).slice(1))
   .enter().append("g");
 
-// gr.append("circle") // add the actual circle axis?
-//     .attr("r", r);
+gr.append("circle") // add the actual circle axis?
+    .attr("r", r);
 
 
 
-// gr.append("text")
-//     .attr("y", function(d) { return -r(d) - 4; }) 
-//     .attr("transform", "rotate(0)")
-//     .style("text-anchor", "middle")
-//     .text(function(d) { return d3.format(".1f")(d); }); // I'm not quite sure what this is doing.
+gr.append("text")
+    .attr("y", function(d) { return -r(d) - 4; }) 
+    .attr("transform", "rotate(0)")
+    .style("text-anchor", "middle")
+    .text(function(d) { return d3.format(".1f")(d); }); // I'm not quite sure what this is doing.
 
 
 var redraw_axis = function(){
@@ -243,7 +243,7 @@ function processData(error, data){
   current_data = mort_data_age.filter(function(d) {
     return d.date < startDate;
   })
-  n_steps = mort_data_age.length;
+  n_steps = mort_data_age.length - 1;
   step_size = targetValue / n_steps;
   renderPlot(current_data);
   //renderSeasonal(mort_data.slice(0,53));
@@ -321,10 +321,10 @@ function update(h) {
     .attr("x", x(h))
     .text(formatDate(h));
 //  console.log(h)
-  previous_date = x.invert(x(h)  - step_size*160)
+  previous_date = x.invert(x(h)  - step_size*160) // slightly more than three years?
   // filter data set and redraw plot
   current_data = mort_data_age.filter(function(d) {
-    return d.date < h && d.date > previous_date;
+    return d.date <= h && d.date >= previous_date;
   })
 
   
@@ -339,7 +339,7 @@ function update(h) {
   //enderPlot(current_data);  
   // draw plot piece by piece
   for (var  dd = 1; dd < n_paths; dd++){
-    plot_data = current_data.slice(dd-2,dd);
+    plot_data = current_data.slice(dd - 1,dd + 1);
     renderPlot(plot_data,opacity(n_paths - dd),colour(n_paths - dd));
   }
 }
