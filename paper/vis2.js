@@ -1,3 +1,6 @@
+// More work needs to be done on this script and the accompanying drop down version
+// to make them more reusable. 
+// Integration with R through htmlwidgets or similar is desirable.
 var do_polar =  function(file_name, plot_id, play_id, play_button){
 
 var q = d3.queue();
@@ -14,7 +17,7 @@ q.defer(d3.csv, file_name)
 var formatDateIntoYear = d3.timeFormat("%Y");
 var formatDate = d3.timeFormat("%b %Y");
 
-var startDate = new Date("2010-01-11"),
+var startDate = new Date("2010-01-04"),
     endDate = new Date("2018-04-30");
 
 
@@ -83,7 +86,7 @@ var label = slider.append("text")
     .attr("class", "label")
     .attr("text-anchor", "middle")
     .text(formatDate(startDate))
-    .attr("transform", "translate(0," + (-25) + ")")
+    .attr("transform", "translate(0," + (-25) + ")");
 
 
 playButton
@@ -99,8 +102,7 @@ playButton
     timer = setInterval(step, 100);
     button.text("Pause");
   }
-
-})
+});
 
 function step() {
   update(x.invert(currentValue));
@@ -135,13 +137,13 @@ var colour = d3.scaleLinear()
 
 var line = d3.radialLine()
     .radius(function(d) { return r(d.resid); })
-    .angle(function(d) {  return d.theta;})
+    .angle(function(d) {  return d.theta;});
 
 
 
 var seasLine = d3.radialLine()
     .radius(function(d) { return r(d.seasonal); })
-    .angle(function(d) {  return d.theta;})
+    .angle(function(d) {  return d.theta;});
     
 
 var svg = d3.select(plot_id).append("svg")
@@ -211,13 +213,13 @@ function processData(error, data){
   endDate =  d3.max(mort_data.map(function(d) {return d.Date}));
   current_data = mort_data.filter(function(d) {
     return d.date < startDate;
-  })
+  });
   n_steps = mort_data.length;
   step_size = targetValue / n_steps;
   renderPlot(current_data);
   //renderSeasonal(mort_data.slice(0,53));
 
-};
+}
 
 
 
@@ -230,7 +232,7 @@ var renderPlot = function(data, opacity, colour){
     .attr("stroke-width", 2)
     .attr("fill", "none")
     .attr("stroke-opacity", opacity);
-  }
+  };
 
 
 var renderSeasonal = function(data){
@@ -240,12 +242,12 @@ var renderSeasonal = function(data){
     .attr("stroke", "green")
     .attr("stroke-width", 2)
     .attr("fill", "none");
-  } 
+  };
 
 var linspace = function(start, stop, nsteps){
-  delta = (stop-start)/(nsteps-1)
-  return d3.range(start, stop+delta, delta).slice(0, nsteps)
-}
+  delta = (stop-start)/(nsteps-1);
+  return d3.range(start, stop+delta, delta).slice(0, nsteps);
+};
 
 
 
@@ -254,7 +256,7 @@ svg.append("circle")
 .attr("cy", 0)
 .attr("r", r(0))
 .attr("fill","green")
-.attr("opacity", 0.2)
+.attr("opacity", 0.2);
 
 
 var previous_date;
@@ -265,11 +267,11 @@ function update(h) {
     .attr("x", x(h))
     .text(formatDate(h));
 //  console.log(h)
-  previous_date = x.invert(x(h)  - step_size*160)
+  previous_date = x.invert(x(h)  - step_size*160);
   // filter data set and redraw plot
   current_data = mort_data.filter(function(d) {
     return d.date < h && d.date > previous_date;
-  })
+  });
 
 
   
@@ -278,7 +280,7 @@ function update(h) {
   //var n_lines = existing_lines.size();
 
 
-  existing_lines.remove()
+  existing_lines.remove();
 
 
   //enderPlot(current_data);  
@@ -289,4 +291,4 @@ function update(h) {
   }
 }
 
-}
+};

@@ -1,3 +1,5 @@
+// This script is a little fragile. Needs to be more programtic. 
+
 //var do_polar_filter =  function(file_name, plot_id, play_id, play_button, filter_button){
 
 var file_name="mod3.csv"
@@ -20,7 +22,7 @@ q.defer(d3.csv, file_name)
 var formatDateIntoYear = d3.timeFormat("%Y");
 var formatDate = d3.timeFormat("%b %Y");
 
-var startDate = new Date("2010-01-11"),
+var startDate = new Date("2010-01-04"),
     endDate = new Date("2018-04-30");
 
 
@@ -165,16 +167,16 @@ var gr = svg.append("g")
     .data(r.ticks(3).slice(1))
   .enter().append("g");
 
-gr.append("circle") // add the actual circle axis?
-    .attr("r", r);
+// gr.append("circle") // add the actual circle axis?
+//     .attr("r", r);
 
 
 
-gr.append("text")
-    .attr("y", function(d) { return -r(d) - 4; }) 
-    .attr("transform", "rotate(15)")
-    .style("text-anchor", "middle")
-    .text(function(d) { return d3.format(".1f")(d); }); // I'm not quite sure what this is doing.
+// gr.append("text")
+//     .attr("y", function(d) { return -r(d) - 4; }) 
+//     .attr("transform", "rotate(0)")
+//     .style("text-anchor", "middle")
+//     .text(function(d) { return d3.format(".1f")(d); }); // I'm not quite sure what this is doing.
 
 
 var redraw_axis = function(){

@@ -14,7 +14,10 @@ convertChapter<-function(chapter_name, standalone=T){
   pandoc_options = c("--filter", "pandoc-fignos", 
                      "--filter", "pandoc-tablenos",
                      "--filter", "pandoc-eqnos",
-                     "--natbib", "-S")
+                     "--natbib",
+                     "--number-sections")
+#                     "--csl", "demography.csl")
+                     #--natbib", "-smart")
   if (standalone){
     pandoc_options <- c(pandoc_options, "-s")
   }
@@ -35,7 +38,7 @@ convertChapter<-function(chapter_name, standalone=T){
 }
 
 
-convertChapter("Viz_weekly")
+convertChapter("Viz_weekly", standalone = F)
 
 # do all work on chapter in .Rmd files
 # convert to .md
