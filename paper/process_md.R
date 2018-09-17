@@ -13,5 +13,6 @@ rmarkdown::render("paper/Viz_weekly.Rmd",
                   output_format = bookdown::pdf_document2(
                     number_sections=T,
                     fig_caption=T,
-                    keep_tex=T)
+                    keep_tex=T,
+                    toc=F)
 )

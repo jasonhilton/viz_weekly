@@ -12,6 +12,11 @@ output:
     fig_caption: yes
     keep_tex: yes
     number_sections: true
+fontsize: 12pt
+header-includes:
+  - \pagenumbering{gobble}
+  - \usepackage{setspace}
+  - \doublespacing
 bibliography: viz.bib
 csl: demography.csl
 biblio-style: "apa-good"
@@ -62,7 +67,21 @@ if (!is_html_output()){
 source(file.path(prefix, "R", "data_cleaning_functions.R"))
 ```
 
+# Abstract {-}
 
+## Background {-}
+Visualisation techniques can greatly aid authors in getting across the point of their paper. 
+
+## Objective {-}
+This paper aims to demonstrate the utility of polar plots for exploring demographic  data, while also demonstrating the value of allowing interactivity in demographic research papers through the use of `html` and `javascript`.
+
+## Methods {-}
+A simple Bayesian model is estimated on weekly UK mortality data, allowing the identification of periods that deviate from seasonal and long-term trends. Polar plots and `d3` based interactive graphics are then used to investigate these deviations.
+
+## Contribution {-}
+The paper demonstrates the value of the use of `html` as a format for academic papers, as this may allow authors to unlock the power of interactive graphics in order to better communicate both features of the data and the results of statistical modelling exercises. Additionally, the paper shows that polar plots provide a useful method for examining demographic data that display seasonal effects or other periodic recurrences.
+
+---
 
 # Introduction
 Traditionally, demographers are concerned with analysing data with a frequency of one year. This is partly because of demography's long association with the practical business of official statistics and  population forecasting [@Greenhalgh1996]. Statistics collection and aggregation is an expensive and time-consuming business which puts a limit on the frequency of releases, and it is natural to align with preexisting cycles such as the calendar or financial year that also form the basis for governmental decision making. The importance of age to demographic analysis is another reason why the year is the discipline's basic temporal unit. Our everyday understanding of age is fixed at a temporal resolution of one year, in that when we are asked to report our age, what we supply is 'age at last birthday'[^young]. The process of 'ageing on' in the cohort component projection model that is integral to most demographic projection almost always involves a discrete increase in both time and age of at least one year.
@@ -235,7 +254,7 @@ Deaths in each week and age group are assumed to follow a Poisson distribution, 
 
 \begin{align}
 \begin{split}
-D_{x,w} \sim \text{Possion}(\mu_{x,w}E_{x,w}) \\
+D_{x,w} \sim \text{Poisson}(\mu_{x,w}E_{x,w}) \\
 \text{log}(\mu_{x,w}) = \alpha_x + \gamma_x t + s_x(d) + \mathbf{x}_{w}\boldsymbol{\beta}.
 \end{split}
 (\#eq:model)  
