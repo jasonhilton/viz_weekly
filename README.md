@@ -1,6 +1,5 @@
 ---
 title: "Visualising weekly mortality data using polar graphs."
-author: "Jason Hilton"
 date: "8 March 2019"
 output:
   html_document:
@@ -11,7 +10,7 @@ output:
 
 Code for the Paper "Visualising Weekly Mortality Data using Polar Graphs
 
-The paper itself is available [here](https://jasonhilton.github.io/viz_weekly/paper/Viz_weekly.html).
+The paper itself is available in the `paper` directory of this repository as [Viz_weekly.html](paper/Viz_weekly.html).
 
 This repo provides the code needed for producing the paper.
 

@@ -1,6 +1,5 @@
 ---
 title: "Visualising weekly mortality data using polar graphs."
-author: "Jason Hilton"
 date: "8 March 2019"
 output:
   bookdown::html_document2:
@@ -467,7 +466,7 @@ To that end, this paper has also demonstrated some relatively crude interactive 
 ------
 
 # Acknowledgments {-}
-This work was supported by the ESRC Centre for Population Change - phase II (grant ES/K007394/1). Many thanks to all the participants at the Rostock Retreat on Visualisation who provided helpful comments and questions on early versions of the work. All the views presented in this paper are those of the author only.
+*Removed for anonymisation*
 
 
 # References {-}
