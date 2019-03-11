@@ -200,14 +200,13 @@ resid_df %<>% mutate(Day=yday(Date))
 
 saveRDS(resid_df, "results/resid.rds")
 
-outd3 <- resid_df %>% group_by(Date) %>% summarise(Residual=mean(Residual)) %>%
-  mutate(yday=yday(Date))
+# outd3 <- resid_df %>% group_by(Date) %>% summarise(Residual=mean(Residual)) %>%
+#   mutate(yday=yday(Date))
 
 # write.table(outd3, file.path("html","mod2.csv"), sep=",",
 #             row.names=F)
 
-write.table(outd3, file.path("paper","mod2.csv"), sep=",",
-            row.names=F)
+
 
 ## age_specific ----------------------------------------------------------------
 
@@ -315,8 +314,8 @@ mu_mean_df <- mu_df %>% mutate(Resid=log(Rate) - Mean_rate) %>%
   group_by(Age_group, Date) %>% summarise(Residual=mean(Resid)) %>% 
   mutate(yday= yday(Date))
 
-write.table(mu_mean_df, file.path("paper","mod3.csv"), sep=",",
-            row.names=F)
+# write.table(mu_mean_df, file.path("paper","mod3.csv"), sep=",",
+#             row.names=F)
 
 saveRDS(mu_mean_df %>% mutate(Week=week(Date)),"results/resid_age.rds")
 
