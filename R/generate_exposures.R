@@ -121,7 +121,7 @@ old_pop_df <- map2_df(old_pops, c("Total","Male", "Female"),
                         mutate(Age=as.numeric(Age), Sex=sex)
                       )
 
-# 2017-2018 data ---------------------------------------------------------------
+# 2017-2019 data ---------------------------------------------------------------
 # from ons population projections
 path <- "data/forecast/"
 
@@ -200,7 +200,7 @@ pop_df <- rbind(pop_df %>%  filter(Age!="All Ages" & Age!="90+") %>%
 pop_df %<>% rbind(pop_fore_df %>% filter(Year>2016)) %>% arrange(Sex,Year,Age)
 
 # lose later years
-pop_df %<>% filter(Year< 2019)
+pop_df %<>% filter(Year<= 2019)
 pop_df <- pop_df %>% group_by(Sex,Age) %>% arrange(Year) %>%
   mutate(Midyear_pop_lag = lag(Midyear_pop),
          Midyear_pop_lead = lead(Midyear_pop))

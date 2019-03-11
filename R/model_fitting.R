@@ -20,16 +20,21 @@ exp_df <- readRDS("data/exp.rds")
 
 # start with simple all-cause data
 
-total_deaths_df <- cause_df %>% filter(Cause=="Total deaths") %>%
-  rename(Week=Week_number)
 
-latest_week <- cause_df %>% filter(Year==2018) %>%
-  select(Week_number) %>% unlist() %>% max()
+## For finding the latest week ..
+# latest_week <- cause_df %>% filter(Year==2019) %>%
+#   select(Week_number) %>% unlist() %>% max() 
+latest_week <- 8
+
+total_deaths_df <- cause_df %>% filter(Cause=="Total deaths") %>%
+  rename(Week=Week_number) %>%
+  filter(Year>2009, Year <=2018 | Week <= latest_week)
+
 
 exp_total_df <- exp_df %>% ungroup() %>% filter(Sex=="Total") %>%
   group_by(Year,Week) %>%
   summarise(Week_exp=sum(Week_exp)) %>%
-  filter(Year>2009, Year <2018 | Week <= latest_week)
+  filter(Year>2009, Year <=2018 | Week <= latest_week)
 
 data_df <- left_join(total_deaths_df, exp_total_df)
 
@@ -149,7 +154,7 @@ saveRDS(hols_df, file.path("results", "hols.rds"))
 # ggplot(hols_df, aes(x=Week,y=Holidays)) +
 #   stat_sample(aes(group=interaction(Sim,Year)),n_samples=1000) +
 #   theme_minimal() + coord_polar()
-#
+# 
 # ggplot(hols_df, aes(x=Week,y=Holidays,group=Year, fill=Year)) +
 #   geom_bar(stat = "summary",position="identity") + coord_polar() +
 #   theme_minimal() + geom_hline(yintercept=0)
@@ -177,7 +182,7 @@ seasonal_df <- seasonal %>% t() %>% as_tibble() %>%
 # ggplot(seasonal_df, aes(x=Day,y=exp(Seasonal))) +
 #   stat_sample(aes(group=interaction(Sim,Year)),n_samples=1000) +
 #   theme_bw() + coord_polar()
-#
+# 
 # ggplot(seasonal_df, aes(x=Day,y=Seasonal)) +
 #   geom_interval(colour="darkgreen") +
 #   theme_minimal() + coord_polar() + ylim(-0.2,0.2) +
@@ -206,12 +211,13 @@ write.table(outd3, file.path("paper","mod2.csv"), sep=",",
 
 ## age_specific ----------------------------------------------------------------
 
-
 ages_df <- readRDS("data/ages.rds")
 exp_df <- readRDS("data/exp.rds")
 
-last_week <- ages_df %>% filter(Year==2018) %>%
-  select(Week_number) %>% unlist() %>% tail(1)
+# last_week <- ages_df %>% filter(Year==2019) %>%
+#   select(Week_number) %>% unlist() %>% tail(1)
+
+last_week <- 8
 
 # males first
 deaths_ages <- ages_df  %>%
@@ -227,7 +233,7 @@ deaths_f <- deaths_ages %>% filter(Sex=="Female") %>%
   select(nms_to_select) %>% as.matrix() %>% t()
 
 expos_ages <- exp_df %>% arrange(Year,Week) %>%
-  filter(Year>2009, Year<2018 | Week <= last_week) %>%
+  filter(Year>2009, Year<=2018 | Week <= last_week) %>%
   mutate(Age_group=cut(Age ,c(0,1,15,45,65,75,85,111), right=F)) %>%
   group_by(Week, Year, Sex, Age_group) %>%
   summarise(Week_exp=sum(Week_exp)) %>%
@@ -320,8 +326,8 @@ resid %<>% t() %>% as_tibble() %>%
          Date=rep(ages_df$midweek %>% unique(), 
                   rep(7, stan_data$N)))
 
-resid %>% gather(Sim, Residual, - Age_group, -Date) %>% 
-  ggplot(aes(x=Date, y= Residual)) + geom_interval() +facet_wrap(~Age_group)
+# resid %>% gather(Sim, Residual, - Age_group, -Date) %>% 
+#   ggplot(aes(x=Date, y= Residual)) + geom_interval() +facet_wrap(~Age_group)
 
 
 

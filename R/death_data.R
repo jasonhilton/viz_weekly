@@ -22,7 +22,7 @@ read_weekly <- function(year,path,prefix,sheet=4, skip=3){
   read_xls(paste0(path, prefix, year, ".xls"),sheet=sheet,skip = skip)
 }
 
-years <- 2010:2018
+years <- 2010:2019
 
 # expect warnings about data formats here
 weekly_dfs <- map(years, read_weekly, path="data/weekly/","weekly_", skip=3)
@@ -43,6 +43,11 @@ weekly_dfs[[7]] <-   weekly_dfs[[7]][,-1]
 weekly_dfs[[9]][1:4,2] <- weekly_dfs[[9]][1:4,1]
 colnames(weekly_dfs[[9]])[2] <- colnames(weekly_dfs[[9]])[1]
 weekly_dfs[[9]] <-   weekly_dfs[[9]][,-1]
+
+
+weekly_dfs[[10]][1:4,2] <- weekly_dfs[[10]][1:4,1]
+colnames(weekly_dfs[[10]])[2] <- colnames(weekly_dfs[[10]])[1]
+weekly_dfs[[10]] <-   weekly_dfs[[10]][,-1]
 
 
 # remove row with missing ICD 2001 data in favour of ICD 2010 data
@@ -75,15 +80,15 @@ cause_df %<>% mutate(Deaths= ifelse(Cause=="Respiratory deaths" & Year==2014 &
 # Generate dates ---------------------------------------------------------------
 
 dates <- map(weekly_dfs, get_date)
-last_week <- tail(which(grepl("2018",dates[[9]])), 1)
+last_week <- tail(which(grepl("2019",dates[[length(dates)]])), 1)
 dates_complete <- seq.Date(as.Date(dates[[1]][1]),
-                           as.Date(dates[[9]][last_week]),
+                           as.Date(dates[[length(dates)]][last_week]),
                            by= "week")
 
-date_df <- cbind(rbind(expand.grid(Week_number_2=1:52, Year=2010:2018),
+date_df <- cbind(rbind(expand.grid(Week_number_2=1:52, Year=2010:2019),
                        data.frame(Week_number_2=53, Year=2015)) %>%
                    arrange(Year, Week_number_2) %>%
-                   filter(!(Year==2018 & Week_number_2 > last_week)),
+                   filter(!(Year==2019 & Week_number_2 > last_week)),
                  date=dates_complete)
 
 date_df %<>% mutate(Week_end = date,
@@ -140,13 +145,13 @@ get_cumul_days<-function(midweek, ref_point = as.Date("2010-01-01")){
   return((midweek - ref_point)[[1]])
 }
 cause_df %<>% mutate(cumul_days = map_dbl(.$midweek, get_cumul_days))
-cause_df %<>% filter(Year <2018 | Week_number <=last_week)
+cause_df %<>% filter(Year <=2018 | Week_number <=last_week)
 saveRDS(file="data/cause.rds", cause_df)
 
 ## ages ------------------------------------------------------------------------
 ages_df <- rbind(age_m_df, age_f_df)
 ages_df <- left_join(ages_df, date_df %>% select(-PH_date, -Month))
 ages_df %<>% mutate(cumul_days = map_dbl(.$midweek, get_cumul_days))
-ages_df %<>% filter(Year <2018 | Week_number <=last_week)
+ages_df %<>% filter(Year <2019 | Week_number <=last_week)
 saveRDS(file="data/ages.rds",ages_df)
 

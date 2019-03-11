@@ -65,7 +65,7 @@ years <- 2010:2015
 
 map(years, get_weekly_year, base)
 
-# latest data for 2016 and 2017
+# latest data for 2016, 2017 and 2018
 curl_download(paste0(base,"2016/publishedweek522016.xls"),
               destfile = "data/weekly/weekly_2016.xls")
 
@@ -74,24 +74,26 @@ curl_download(paste0(base,"2017/publishedweek522017.xls"),
               destfile = "data/weekly/weekly_2017.xls")
 
 
-curl_download(paste0(base,"2017/publishedweek522017.xls"),
-              destfile = "data/weekly/weekly_2017.xls")
+curl_download(paste0(base,"2018/publishedweek522018.xls"),
+              destfile = "data/weekly/weekly_2018.xls")
+
+
 
 weeks <- 1:52
 get_url <- function(week,year,base){
-  url <- paste0(base, year,"/publishedweek", week,year, ".xls")
+  url <- paste0(base, year,"/publishedweek", sprintf("%02d", week),year, ".xls")
   return(url)
 }
 data_available <- map_lgl(weeks, function(week, year,base){
     url <- get_url(week, year,base)
     identical(status_code(HEAD(url)), 200L)
-  }, year=2018, base=base)
+  }, year=2019, base=base)
 
 last_week_avail <- tail(which(data_available),1)
 
-url <- get_url(last_week_avail, 2018, base)
+url <- get_url(last_week_avail, 2019, base)
 curl_download(url,
-              destfile = "data/weekly/weekly_2018.xls")
+              destfile = "data/weekly/weekly_2019.xls")
 
 
 
