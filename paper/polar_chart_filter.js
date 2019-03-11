@@ -1,18 +1,18 @@
 // This script is a little fragile. Needs to be more programtic. 
 
-//var do_polar_filter =  function(file_name, plot_id, play_id, play_button, filter_button){
+var do_polar_filter =  function(weekly_age_data, plot_id, play_id, play_button, filter_button){
 
-var file_name="mod3.csv"
-var plot_id = "#plot-2"
-var play_id = "#play-2"
-var play_button = "#play-button-2"
-var filter_button = "#age_select"
+// var file_name="mod3.csv"
+// var plot_id = "#plot-2"
+// var play_id = "#play-2"
+// var play_button = "#play-button-2"
+// var filter_button = "#age_select"
 
-var q = d3.queue();
+// var q = d3.queue();
 
-//add your csv call to the queue
-q.defer(d3.csv, file_name)
- .await(processData);
+// //add your csv call to the queue
+// q.defer(d3.csv, file_name)
+//  .await(processData);
 
 
 // play slider -------------------------------------------------------------------------
@@ -43,6 +43,7 @@ var moving = false;
 var currentValue = 0;
 var targetValue = p_width;
 var n_steps;
+var timer;
 
 var playButton = d3.select(play_button);
     
@@ -212,7 +213,7 @@ var mort_data;
 var mort_data_age;
 var current_data;
 var step_size;
-function processData(error, data){
+function processData(data){
   mort_data = data.map(function(d) { 
     return {
       date: new Date(d.Date),
@@ -263,6 +264,7 @@ var renderPlot = function(data, opacity, colour){
     .attr("stroke-opacity", opacity);
   }
 
+processData(weekly_age_data);
 
 var renderSeasonal = function(data){
   svg.append("path")
@@ -344,4 +346,4 @@ function update(h) {
   }
 }
 
-//}
+}

@@ -1,18 +1,20 @@
-// This script is a little fragile. Needs to be more programtic. 
+// More work needs to be done on this script and the accompanying drop down version
+// to make them more reusable. 
+// Integration with R through htmlwidgets or similar is desirable.
+var do_polar =  function(weekly_data, plot_id, play_id, play_button){
 
-//var do_polar_filter =  function(file_name, plot_id, play_id, play_button, filter_button){
+// var q = d3.queue();
 
-var file_name="mod3.csv"
-var plot_id = "#plot-2"
-var play_id = "#play-2"
-var play_button = "#play-button-2"
-var filter_button = "#age_select"
+// // //add your csv call to the queue
+// q.defer(d3.csv, file_name)
+//  .await(processData);
 
-var q = d3.queue();
 
-//add your csv call to the queue
-q.defer(d3.csv, file_name)
- .await(processData);
+
+
+
+
+
 
 
 // play slider -------------------------------------------------------------------------
@@ -91,8 +93,10 @@ var label = slider.append("text")
     .attr("class", "label")
     .attr("text-anchor", "middle")
     .text(formatDate(startDate))
-    .attr("transform", "translate(0," + (-25) + ")")
+    .attr("transform", "translate(0," + (-25) + ")");
 
+
+var timer;
 
 playButton
   .on("click", function() {
@@ -107,8 +111,7 @@ playButton
     timer = setInterval(step, 100);
     button.text("Pause");
   }
-
-})
+});
 
 function step() {
   update(x.invert(currentValue));
@@ -143,13 +146,13 @@ var colour = d3.scaleLinear()
 
 var line = d3.radialLine()
     .radius(function(d) { return r(d.resid); })
-    .angle(function(d) {  return d.theta;})
+    .angle(function(d) {  return d.theta;});
 
 
 
 var seasLine = d3.radialLine()
     .radius(function(d) { return r(d.seasonal); })
-    .angle(function(d) {  return d.theta;})
+    .angle(function(d) {  return d.theta;});
     
 
 var svg = d3.select(plot_id).append("svg")
@@ -160,7 +163,6 @@ var svg = d3.select(plot_id).append("svg")
     // the translates allows things to be calculated from the centre point not the top right or wherever.
 
 // radial axis group --------------------------------------------------------------------
-
 var gr = svg.append("g")
     .attr("class", "r axis")
   .selectAll("g")
@@ -174,16 +176,9 @@ gr.append("circle") // add the actual circle axis?
 
 gr.append("text")
     .attr("y", function(d) { return -r(d) - 4; }) 
-    .attr("transform", "rotate(0)")
+    .attr("transform", "rotate(15)")
     .style("text-anchor", "middle")
     .text(function(d) { return d3.format(".1f")(d); }); // I'm not quite sure what this is doing.
-
-
-var redraw_axis = function(){
-  gr.selectAll("g")
-  .data(r.ticks(3).slice(1))
-  .enter().append("g");
-}
 
 // angle axis group ------------------------------------------------------------------
 var months = ["April", "May", "June", "July", "August", "September",
@@ -208,18 +203,17 @@ ga.append("text")
 
 
 
+
 var mort_data;
-var mort_data_age;
 var current_data;
 var step_size;
-function processData(error, data){
+function processData(data){
   mort_data = data.map(function(d) { 
     return {
       date: new Date(d.Date),
       theta: 2 * Math.PI * (d.yday) / 366,
       //theta2: 2 * Math.PI * (d.yday_lead) / 366,
       resid: +d.Residual,
-      age: d.Age_group
       //resid2: +d.Residual_lead,
       //seasonal: +d.Seasonal
     };
@@ -227,42 +221,28 @@ function processData(error, data){
 
   startDate =  d3.min(mort_data.map(function(d) {return d.Date}));
   endDate =  d3.max(mort_data.map(function(d) {return d.Date}));
-
-
-
-  mort_data_age = mort_data.filter(function(d) { 
-    return d.age=="85+";
-  })
-
-  min_R =  d3.min(mort_data_age.map(function(d) {return d.resid}));
-  max_R =  d3.max(mort_data_age.map(function(d) {return d.resid}));
-
-  r.domain([min_R,max_R]);
-
-
-  current_data = mort_data_age.filter(function(d) {
+  current_data = mort_data.filter(function(d) {
     return d.date < startDate;
-  })
-  n_steps = mort_data_age.length - 1;
+  });
+  n_steps = mort_data.length - 1;
   step_size = targetValue / n_steps;
   renderPlot(current_data);
   //renderSeasonal(mort_data.slice(0,53));
-
-};
-
-
+}
 
 
 var renderPlot = function(data, opacity, colour){
   svg.append("path")
     .attr("d", line(data))
-    .attr("class", "mortLine2")
+    .attr("class", "mortLine")
     .attr("stroke", colour)
     .attr("stroke-width", 2)
     .attr("fill", "none")
     .attr("stroke-opacity", opacity);
-  }
+  };
 
+
+processData(weekly_data);
 
 var renderSeasonal = function(data){
   svg.append("path")
@@ -271,49 +251,24 @@ var renderSeasonal = function(data){
     .attr("stroke", "green")
     .attr("stroke-width", 2)
     .attr("fill", "none");
-  } 
+  };
 
 var linspace = function(start, stop, nsteps){
-  delta = (stop-start)/(nsteps-1)
-  return d3.range(start, stop+delta, delta).slice(0, nsteps)
-}
+  delta = (stop-start)/(nsteps-1);
+  return d3.range(start, stop+delta, delta).slice(0, nsteps);
+};
 
 
 
 svg.append("circle")
-.attr("id", "zero_circ")
 .attr("cx", 0)
 .attr("cy", 0)
 .attr("r", r(0))
 .attr("fill","green")
-.attr("opacity", 0.2)
-
-
-d3.select(filter_button)
-  .on("change", function () {
-    var age = d3.select("#age_select").node().value;
-     
-
-    mort_data_age = mort_data.filter(function(d) { 
-      return d.age==age;
-    });
-
-    // update axis
-    min_R =  d3.min(mort_data_age.map(function(d) {return d.resid}));
-    max_R =  d3.max(mort_data_age.map(function(d) {return d.resid}));
-    r.domain([min_R,max_R]);
-    gr.selectAll("circle").attr("r",r);
-    d3.select("#zero_circ").attr("r",r(0));
-    gr.selectAll("text").attr("y", function(d) { return -r(d) - 4; })
-
-    update(x.invert(currentValue));
-
-  });
-
+.attr("opacity", 0.2);
 
 
 var previous_date;
-
 function update(h) {
   // update position and text of label according to slider scale
   handle.attr("cx", x(h));
@@ -321,27 +276,28 @@ function update(h) {
     .attr("x", x(h))
     .text(formatDate(h));
 //  console.log(h)
-  previous_date = x.invert(x(h)  - step_size*160) // slightly more than three years?
+  previous_date = x.invert(x(h)  - step_size * 160);
   // filter data set and redraw plot
-  current_data = mort_data_age.filter(function(d) {
+  current_data = mort_data.filter(function(d) {
     return d.date <= h && d.date >= previous_date;
-  })
+  });
+
 
   
   n_paths = current_data.length;
-  var existing_lines = d3.selectAll(".mortLine2");
+  var existing_lines = d3.selectAll(".mortLine");
   //var n_lines = existing_lines.size();
 
 
-  existing_lines.remove()
+  existing_lines.remove();
 
 
   //enderPlot(current_data);  
   // draw plot piece by piece
   for (var  dd = 1; dd < n_paths; dd++){
-    plot_data = current_data.slice(dd - 1,dd + 1);
+    plot_data = current_data.slice(dd-1,dd+1);
     renderPlot(plot_data,opacity(n_paths - dd),colour(n_paths - dd));
   }
 }
 
-//}
+};

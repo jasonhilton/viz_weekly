@@ -18,7 +18,7 @@ var formatDateIntoYear = d3.timeFormat("%Y");
 var formatDate = d3.timeFormat("%b %Y");
 
 var startDate = new Date("2010-01-04"),
-    endDate = new Date("2018-04-30");
+    endDate = new Date("2019-02-18");
 
 
 var p_h = 100;
