@@ -1,7 +1,7 @@
 ---
 title: "Visualising weekly mortality data using polar graphs."
 author: "Jason Hilton"
-date: "16 September 2018"
+date: "8 March 2019"
 output:
   bookdown::html_document2:
     fig_caption: yes
@@ -129,8 +129,8 @@ The press towards open access publication and replicability may provide provide 
 The availability of tools to simplify the production of interactive visualisations is also an issue. The `d3` javascript plotting library [@Bostock2011] is highly flexible and can produce dynamic client-side visualisations, where the computational work involved with changing the plot in response to interaction takes place on the user's computer, thus avoiding the need for server hosting. However, the learning curve associated with d3 is relatively steep. Interfaces with common statistical programming languages exist - for instance, the `rCharts` and `htmlwidgets` R packages provide interfaces to certain `d3`-based libraries. The development of pre-defined `d3` plots for interactive visualisation of, for instance, R model objects might be one way in which to lower the technical barrier to the production of useful visualisations. The accessibility and permanence of research outputs are also an issue to be considered in this debate. In light of the above discussion, in parallel to the `.pdf` version of this paper, an `.html` version will also be provided with containing plots produced using `d3`. The `bookdown` package for R is used for this purpose, as it facilitates production of `.pdf` and `.html` outputs from a single source file written in a simple markdown format, interleaved with the R code needed to produce plots and graphics [@Xie2018]. Snapshots of interactive graphics can also easily be produced in this framework so that the `.pdf` and `html` version of the document do not diverge.
 
 
-# Weekly Mortality in England and Wales 2010-2018
-In order to demonstrate the utility of the two visualisation tools discussed in the preceding discussion, polar charts and interactivity, the rest of this paper explores their use in the exploration of weekly mortality data for England and Wales between 2010 and April 2018. This period is particularly interesting and controversial as it coincides with both an apparent slow-down in the rate of mortality decline [@CMI2015a; @Hiam2017] and a period of austerity where government spending on health and social care was not increased at the rate it had been previously [@LGA2015,@Hiam2017a]. This latter period of spending restraint also took place as the population aged, so that the demand for healthcare was in any case likely to increase. A series of papers have investigated the characteristics of this deceleration and its potential causes and effects. An early paper by the actuaries of the Continuous Mortality Investigation identified that the rate of decline of the age-standardised mortality rate had slowed considerably between 2010-2014 when compared to the trend up to 2010 [@CMI2015a], and inspired the approach of this paper in also examining weekly mortality. Flu out-breaks that disproportionately effect the elderly population (also seen in other parts of Europe) are responsible for some of the year-to-year variation [@PublicHealthEngland2016], but it has also been suggested that reductions in the social care budget of local councils and additional pressure on the National Health Services caused by lack of funding may be responsible for the greater than expected number of deaths [@Loopstra2016; @Hiam2017a]. 
+# Weekly Mortality in England and Wales 2010-2019
+In order to demonstrate the utility of the two visualisation tools discussed in the preceding discussion, polar charts and interactivity, the rest of this paper explores their use in the exploration of weekly mortality data for England and Wales between 2010 and Februry 2019. This period is particularly interesting and controversial as it coincides with both an apparent slow-down in the rate of mortality decline [@CMI2015a; @Hiam2017] and a period of austerity where government spending on health and social care was not increased at the rate it had been previously [@LGA2015; @Hiam2017a]. This latter period of spending restraint also took place as the population aged, so that the demand for healthcare was in any case likely to increase. A series of papers have investigated the characteristics of this deceleration and its potential causes and effects. An early paper by the actuaries of the Continuous Mortality Investigation identified that the rate of decline of the age-standardised mortality rate had slowed considerably between 2010-2014 when compared to the trend up to 2010 [@CMI2015a], and inspired the approach of this paper in also examining weekly mortality. Flu out-breaks that disproportionately effect the elderly population (also seen in other parts of Europe) are responsible for some of the year-to-year variation [@PublicHealthEngland2016], but it has also been suggested that reductions in the social care budget of local councils and additional pressure on the National Health Services caused by lack of funding may be responsible for the greater than expected number of deaths [@Loopstra2016; @Hiam2017a]. 
 
 The purpose of this paper is not to shed any new light on the debate over the causes of mortality deceleration in recent years, however, but rather to demonstrate the utility of particular visualisation tools using a relevant dataset. Mortality data show clear seasonal patterns relating to temperature and disease prevalence, and so are periodic in the sense discussed above and suitable for examination using polar charts. The months of December and January, which share similar climatic conditions, are displayed adjacent to each other in polar charts and are thus easily comparable. Data published by the ONS provides weekly deaths counts for England and Wales, with breakdowns along a number of dimensions: sex, broad age group; Government Office Region; and cause of death (broadly categorised as respiratory or other cause) [@OfficeforNationalStatistics2018]. Figure \@ref(fig:timeseries) displays raw weekly death data for England and Wales using standard Cartesian coordinates, using the interactive `dygraphs` `d3` library to facilitate user investigation in the `html` version of this paper. Seasonal patterns are noticeable in both respiratory and other causes of death, and the effect of public holidays and death registration is also evident in sharp falls followed by compensating  recoveries around Christmas and Easter. Raw death counts do also appear higher in the second half of the data, but no attempt has yet been made to account for exposure differences, both in absolute terms and with respect to age composition.
 
@@ -153,7 +153,7 @@ if(is_html_output()){
 ```
 
 
-We can alternatively examine this data in a polar coordinates plot, as shown in Figure \@ref(fig:polar1). It is necessary to limit the the period displayed to 2014-2018 to avoid over-plotting. The polar plot emphasises the seasonal nature of the respiratory death series, showing higher counts and greater volatility in the first quarter of the year. The dotted ring provides a visual point of reference, and is set at the mean value over the period. Peaks in respiratory deaths in 2015 and 2018 are clearly visible and comparable with early years.
+We can alternatively examine this data in a polar coordinates plot, as shown in Figure \@ref(fig:polar1). It is necessary to limit the the period displayed to 2014-2019 to avoid over-plotting. The polar plot emphasises the seasonal nature of the respiratory death series, showing higher counts and greater volatility in the first quarter of the year. The dotted ring provides a visual point of reference, and is set at the mean value over the period. Peaks in respiratory deaths in 2015 and 2018 are clearly visible and comparable with early years.
 
 ```{r polar1, fig.cap="Polar plot of England and Wales Mortality 2014-2018. Source: ONS 2018", fig.width=ifelse(is_html_output(), 10,8),fig.height=ifelse(is_html_output(), 4,8), fig.fullwidth=TRUE}
 cause_df %<>% rename(Date=date) %>% mutate(`Day of Year` = yday(midweek))
@@ -166,7 +166,7 @@ polar_plot_df <- rbind(cause_df, duplicate_points %>% select(-N)) %>%
   ungroup() %>% arrange(Year, `Day of Year`)
 month_labeler <- function(yday) month(date("2017-12-31") + yday, label=T)
 
-cols <- viridis_pal(option="C",end = 0.9)(5)
+cols <- viridis_pal(option="C",end = 0.9)(6)
 
 mean_resp <- polar_plot_df %>% filter(Cause=="Respiratory deaths",
                                       Year > 2013) %>%
@@ -228,7 +228,7 @@ if(is_html_output()){
 Plotting raw death counts provides little information about the underlying mortality trends. For this we need to take into account both seasonality and exposure to risk, and to attempt to unpick the effect of public holidays on death registrations. In the exploratory analysis that follows, a crude interpolation method is used to approximate weekly exposure by age, and a statistical model is used to extract trend and seasonal components, together with fixed effects for public holidays. The approached used is similar in some respects to that used in Chapter 21 of @Gelman2014a for the analysis of daily birth data; although the model here is simpler, and uses a periodic spline rather than a Gaussian process for smoothing.
 
 ## Exposure
-To approximate exposures by week and age, midyear population totals taken from ONS midyear estimates and, for 2017 and 2018, ONS forecasts, are linearly  interpolated from mid-year to mid-year in a similar manner to @CMI2015a. The population at the end of week $w$ in year $t$ is calculated by  taking midyear estimates for years $t$ and $t+1$, and moving $\frac{w}{52}$ of the way along a straight line connecting these estimates. The exposure is then the average of the population at the beginning and end of the week, correcting for the fact that we wish to express exposure in person-years:
+To approximate exposures by week and age, midyear population totals taken from ONS midyear estimates and, for 2017-19, ONS forecasts, are linearly  interpolated from mid-year to mid-year in a similar manner to @CMI2015a. The population at the end of week $w$ in year $t$ is calculated by  taking midyear estimates for years $t$ and $t+1$, and moving $\frac{w}{52}$ of the way along a straight line connecting these estimates. The exposure is then the average of the population at the beginning and end of the week, correcting for the fact that we wish to express exposure in person-years:
 
 
 
@@ -305,11 +305,12 @@ get_linerange <- function(x){
   names(out) <- c("ymin","y", "ymax")
   return(out)
 }
-ggplot(hols_df, aes(x=Week,y=Holidays,group=Year, fill=Year)) + 
+ggplot(hols_df %>% mutate(Year=as.factor(Year)), 
+       aes(x=Week,y=Holidays,group=Year, fill=Year)) + 
   geom_bar(stat = "summary",position="identity", fun.y=mean) + coord_polar() + 
   geom_linerange(stat="summary", fun.data=get_linerange) + 
   theme_minimal() + geom_hline(yintercept=0) + 
-  scale_fill_viridis(option="C") +
+  scale_fill_viridis_d(option="C") +
   ggtitle("Posterior Means of Effects of Public Holidays") +
   annotate("text", x=2, y=0.3, label="Christmas and \n New Year") +
   annotate("text", x=15, y=0.24, label="Easter") + 
@@ -320,7 +321,7 @@ ggplot(hols_df, aes(x=Week,y=Holidays,group=Year, fill=Year)) +
 ```
 
 
-The estimated seasonal effect was as expected; mortality is higher during the period December-March, and considerably lower during the summer months (Figure \@ref(fig:seasonal). Figure \@ref(fig:resid) and the interactive graphic in the `html` version of this paper display the model residuals, defined here as the difference between the observed log rates and the equivalent posterior samples, we can see that the greatest deviations occur in the winters of early 2015 and 2018. This is potentially related to influenza outbreaks that appear to have disproportionately affected care homes and the old [@PublicHealthEngland2015a;@PublicHealthEngland2018]. The interactive version of the plot was constructed in `d3` from the outputs of the model [^sources]. Points inside the green circle are below the posterior mean estimate, while outside this circle rates are higher than the simple linear, seasonal and holiday terms together imply. As time progresses, older data is fades and is removed from the plot, with the most recent data displayed in blue. The plot can be paused at any point, and the slider dragged back to any point in the range of the data, between 2010 and April 2018.
+The estimated seasonal effect was as expected; mortality is higher during the period December-March, and considerably lower during the summer months (Figure \@ref(fig:seasonal). Figure \@ref(fig:resid) and the interactive graphic in the `html` version of this paper display the model residuals, defined here as the difference between the observed log rates and the equivalent posterior samples, we can see that the greatest deviations occur in the winters of early 2015 and 2018. This is potentially related to influenza outbreaks that appear to have disproportionately affected care homes and the old [@PublicHealthEngland2015a;@PublicHealthEngland2018]. The interactive version of the plot was constructed in `d3` from the outputs of the model [^sources]. Points inside the green circle are below the posterior mean estimate, while outside this circle rates are higher than the simple linear, seasonal and holiday terms together imply. As time progresses, older data is fades and is removed from the plot, with the most recent data displayed in blue. The plot can be paused at any point, and the slider dragged back to any point in the range of the data, between 2010 and February 2019.
 
 [^sources]: Code from two simple `d3` code 'blocks' produced by Mike Bostock and Jane Pong were utilised to help construct this plot. These are available at  [https://bl.ocks.org/mbostock/4583749](https://bl.ocks.org/mbostock/4583749) and [https://bl.ocks.org/officeofjane/47d2b0bfeecfcb41d2212d06d095c763](https://bl.ocks.org/officeofjane/47d2b0bfeecfcb41d2212d06d095c763) respectively.
 
@@ -345,15 +346,38 @@ ggplot(resid_df %>% group_by(Date) %>%
   geom_tile() + 
   scale_fill_viridis(option="C") + 
   theme_minimal() + 
-  scale_y_reverse() + scale_x_continuous(position="top")
+  scale_y_reverse(minor_breaks=min(resid_df$Year):max(resid_df$Year),
+                  breaks=min(resid_df$Year):max(resid_df$Year),
+                  expand = c(0, 0)) +
+  scale_x_continuous(position="top", expand = c(0, 0))
 
 ```
 
 
 
 
-```{r plot, results="asis"}
-if(is_html_output()){cat("<script src='https://cdnjs.cloudflare.com/ajax/libs/d3/4.5.0/d3.js'></script><script src='https://cdnjs.cloudflare.com/ajax/libs/d3-queue/3.0.3/d3-queue.js'></script><br><br><div class='figure'><div id='play'><button class='play-button'>Play</button></div><br><br><div id='plot'></div><p class='caption'>(\\#fig:residint1)Interactive plot of model residuals by date</p></div><br><br><script src='vis2.js'></script><script>do_polar('mod2.csv','#plot','#play','.play-button')</script>")}
+```{r circ_plot, results="asis"}
+library(stringr)
+if(is_html_output()){
+json_data <- jsonlite::toJSON(resid_df %>% group_by(Date) %>%
+                                summarise(Residual=mean(Residual)) %>%
+                                mutate(yday=yday(Date)))
+html_plot_string <- "<script src='https://cdnjs.cloudflare.com/ajax/libs/d3/4.5.0/d3.js'></script><script src='https://cdnjs.cloudflare.com/ajax/libs/d3-queue/3.0.3/d3-queue.js'></script><br><br><div class='figure'><div id='play'><button id='play-button-1' class='play-button'>Play</button></div><br><br><div id='plot'></div><p class='caption'>(\\#fig:residint1)Interactive plot of model residuals by date</p></div><br><br><script src='polar_chart.js'></script><script>${data_definition}</script><script>do_polar(${data_name},'#plot','#play','#play-button-1')</script>"
+# repeated string interpolation is a bit weird but it helps me think clearer.
+# first create a line of js defining the data - inserting the json data created earlier.
+data_definition <- "var r_${plot_id}_data = ${plot_data}"
+data_definition <- stringr::str_interp(data_definition,
+                                       list(plot_id=knitr::opts_current$get("label"),
+                                            plot_data=json_data))
+# then I insert it in the html that will hold the plot
+html_plot_string <- stringr::str_interp(html_plot_string, 
+                    list(data_definition=data_definition,
+                         data_name=paste0("r_",
+                                          knitr::opts_current$get("label"),
+                                          "_data")))
+# and output this to the html
+cat(html_plot_string)
+}
 ```
 
 
@@ -397,7 +421,10 @@ ggplot(resid_2 %>% filter(Age_group=="85+") %>% group_by(Date) %>%
   geom_tile() + 
   scale_fill_viridis(option="C") + 
   theme_minimal() + 
-  scale_y_reverse() + scale_x_continuous(position="top")
+  scale_y_reverse(expand = c(0, 0),
+                  minor_breaks=min(resid_df$Year):max(resid_df$Year),
+                  breaks=min(resid_df$Year):max(resid_df$Year)) +
+  scale_x_continuous(position="top", expand = c(0, 0))
 ```
 
 As before, we can also examine the evolution of these patterns through time using an animated d3 graph. Using the drop-down menu, one can also switch between different age groups, and the chart and chart axis adjust dynamically. A greater variability is evident at lower ages, where the underlying rates are low. Older ages, in contrast, show more pronounced peaks in particular periods when influenza or lower temperatures may have increased mortality. Pausing at particular time periods and switch between age-groups facilitates direct comparison between them. A similar technique could be fruitfully employed within demographic papers for comparing predictions between different models, or differences in raw rates between sexes. The use of interactivity within a paper in this manner may help authors better communicate their arguments.
@@ -407,7 +434,25 @@ As before, we can also examine the evolution of these patterns through time usin
 
 
 ```{r residuals2, results="asis", include=is_html_output()}
-if(is_html_output()){cat("<div class='figure'><div id='play-2'><button class='play-button' id='play-button-2'>Play</button></div><br><div><select id='age_select'><option value='Under 1 year'>Under 1 Year</option><option value= '01-14'> 1-14</option><option value= '15-44'> 15-44</option><option value= '45-64'> 45-64</option><option value= '65-74'> 65-74</option><option value= '75-84'> 75-84</option><option selected='selected' value= '85+'> 85+</option></select></div><br><div id='plot-2'></div><p class='caption'>(\\#fig:residuals2)Interactive plot of model residuals by Age group and date</p></div><br><br><script src='vis3.js'></script>")}
+if(is_html_output()){
+json_data_2 <- jsonlite::toJSON(resid_2 %>% select(-Week))
+
+html_plot_string <- "<div class='figure'><div id='play-2'><button class='play-button' id='play-button-2'>Play</button></div><br><div><select id='age_select'><option value='Under 1 year'>Under 1 Year</option><option value= '01-14'> 1-14</option><option value= '15-44'> 15-44</option><option value= '45-64'> 45-64</option><option value= '65-74'> 65-74</option><option value= '75-84'> 75-84</option><option selected='selected' value= '85+'> 85+</option></select></div><br><div id='plot-2'></div><p class='caption'>(\\#fig:residuals2)Interactive plot of model residuals by Age group and date</p></div><br><br><script src='polar_chart_filter.js'></script><script>${data_definition}</script><script>do_polar_filter(${data_name},'#plot-2','#play-2','#play-button-2','#age_select')</script>"
+# repeated string interpolation is a bit weird but it helps me think clearer.
+# first create a line of js defining the data - inserting the json data created earlier.
+data_definition <- "var r_${plot_id}_data = ${plot_data}"
+data_definition <- stringr::str_interp(data_definition,
+                                       list(plot_id=knitr::opts_current$get("label"),
+                                            plot_data=json_data_2))
+# then I insert it in the html that will hold the plot
+html_plot_string <- stringr::str_interp(html_plot_string,
+                    list(data_definition=data_definition,
+                         data_name=paste0("r_",
+                                          knitr::opts_current$get("label"),
+                                          "_data")))
+# and output this to the html
+cat(html_plot_string)
+}
 
 ```
 
@@ -423,6 +468,7 @@ To that end, this paper has also demonstrated some relatively crude interactive 
 
 # Acknowledgments {-}
 This work was supported by the ESRC Centre for Population Change - phase II (grant ES/K007394/1). Many thanks to all the participants at the Rostock Retreat on Visualisation who provided helpful comments and questions on early versions of the work. All the views presented in this paper are those of the author only.
+
 
 # References {-}
 
