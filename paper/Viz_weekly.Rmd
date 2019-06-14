@@ -67,6 +67,19 @@ if (!is_html_output()){
 source(file.path(prefix, "R", "data_cleaning_functions.R"))
 ```
 
+```{r, results="asis",include=is_html_output()}
+if(is_html_output()){
+cat("
+<style>
+body {
+  text-align: justify;
+}
+</style>
+")
+}
+```
+
+
 # Abstract {-}
 
 ## Background {-}
